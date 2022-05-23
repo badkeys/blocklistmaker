@@ -5,14 +5,16 @@ Script to create blocklist of compromised private keys for the badkeys tool
 
 If you merely want to use the [badkeys](https://github.com/badkeys/badkeys)
 tool you don't need this. This is only supporting code to create the data
-badkeys downloads with the --update-bl/--update-bl-and-urls parameters.
+badkeys downloads with the *--update-bl*/*--update-bl-and-urls* parameters.
 
 You need a subdirectory keyrepos with checkouts of the following git repositories:
 
+```
  https://github.com/badkeys/debianopenssl
  https://github.com/badkeys/keypairvuln
  https://github.com/SecurityFail/kompromat
  https://github.com/SecurityFail/malware
+```
 
 *blocklistmaker* is a python script to create truncated hashes in suitable
 formats for badkeys. *createlists* runs this script on all the key collections
