@@ -1,0 +1,39 @@
+#!/bin/bash
+set -euo pipefail
+
+DATE=$(date -uI)
+
+O=o$DATE
+BKFORMAT=0
+
+mkdir -p $O/v$BKFORMAT
+
+./blocklistmaker -s keyrepos/debianopenssl -d $O/out-debianssl-1 1
+./blocklistmaker -s keyrepos/keypairvuln -d $O/out-keypair-2 2
+./blocklistmaker -s keyrepos/malware/src/ -d $O/out-ransomware-3 3
+./blocklistmaker -s keyrepos/kompromat/src/documentation -d $O/out-documentation-4 4
+./blocklistmaker -s keyrepos/kompromat/src/firmware -d $O/out-firmware-5 5
+./blocklistmaker -s keyrepos/kompromat/src/localhostcert -d $O/out-localhostcert-6 6
+./blocklistmaker -s keyrepos/kompromat/src/localroot -d $O/out-localroot-7 7
+./blocklistmaker -s keyrepos/kompromat/src/misc -d $O/out-misc-8 8
+./blocklistmaker -s keyrepos/kompromat/src/rfc -d $O/out-rfc-9 9
+./blocklistmaker -s keyrepos/kompromat/src/softwaretests -d $O/out-softwaretests-10 10
+./blocklistmaker -s keyrepos/kompromat/src/testvectors -d $O/out-testvectors-11 11
+
+cat $O/out-*/*-long.txt >"$O/_bklookup_unsorted.txt"
+LC_ALL=C sort -u "$O/_bklookup_unsorted.txt" >$O/v$BKFORMAT/lookup.txt
+
+cat $O/out-*/*-short.txt >"$O/_blunsorted.txt"
+LC_ALL=C sort -u "$O/_blunsorted.txt" | xxd -r -p >$O/v$BKFORMAT/blocklist.dat
+
+BLOCKLISTSHA256=$(sha256sum $O/v$BKFORMAT/blocklist.dat | cut -d' ' -f1)
+LOOKUPSHA256=$(sha256sum $O/v$BKFORMAT/lookup.txt | cut -d' ' -f1)
+
+sed template.badkeysdata.json \
+	-e "s:_DATE_:$DATE:g" \
+	-e "s:_BLOCKLISTSHA256_:$BLOCKLISTSHA256:g" \
+	-e "s:_LOOKUPSHA256_:$LOOKUPSHA256:g" \
+	>$O/v$BKFORMAT/badkeysdata.json
+
+xz $O/v$BKFORMAT/blocklist.dat
+xz $O/v$BKFORMAT/lookup.txt
