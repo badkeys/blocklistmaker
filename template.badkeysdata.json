@@ -1,0 +1,87 @@
+{
+  "bkformat": 0,
+  "date": "_DATE_",
+  "blocklist_url": "https://update.badkeys.info/v0/blocklist.dat.xz",
+  "blocklist_sha256": "_BLOCKLISTSHA256_",
+  "lookup_url": "https://update.badkeys.info/v0/lookup.txt.xz",
+  "lookup_sha256": "_LOOKUPSHA256_",
+  "blocklists": [
+    {
+      "id": 1,
+      "name": "debianssl",
+      "type": "github",
+      "repo": "badkeys/debianopenssl",
+      "path": "main"
+    },
+    {
+      "id": 2,
+      "name": "keypair",
+      "type": "github",
+      "repo": "badkeys/keypairvuln",
+      "path": "main"
+    },
+    {
+      "id": 3,
+      "name": "ransomware",
+      "type": "github",
+      "repo": "SecurityFail/malware",
+      "path": "master/src"
+    },
+    {
+      "id": 4,
+      "name": "documentation",
+      "type": "github",
+      "repo": "SecurityFail/kompromat",
+      "path": "master/src/documentation"
+    },
+    {
+      "id": 5,
+      "name": "firmware",
+      "type": "github",
+      "repo": "SecurityFail/kompromat",
+      "path": "master/src/firmware"
+    },
+    {
+      "id": 6,
+      "name": "localhostcert",
+      "type": "github",
+      "repo": "SecurityFail/kompromat",
+      "path": "master/src/localhostcert"
+    },
+    {
+      "id": 7,
+      "name": "localroot",
+      "type": "github",
+      "repo": "SecurityFail/kompromat",
+      "path": "master/src/localroot"
+    },
+    {
+      "id": 8,
+      "name": "misc",
+      "type": "github",
+      "repo": "SecurityFail/kompromat",
+      "path": "master/src/misc"
+    },
+    {
+      "id": 9,
+      "name": "rfc",
+      "type": "github",
+      "repo": "SecurityFail/kompromat",
+      "path": "master/src/rfc"
+    },
+    {
+      "id": 10,
+      "name": "softwaretests",
+      "type": "github",
+      "repo": "SecurityFail/kompromat",
+      "path": "master/src/softwaretests"
+    },
+    {
+      "id": 11,
+      "name": "testvectors",
+      "type": "github",
+      "repo": "SecurityFail/kompromat",
+      "path": "master/src/testvectors"
+    }
+  ]
+}
