@@ -21,10 +21,25 @@ mkdir -p $O/v$BKFORMAT
 ./blocklistmaker -s keyrepos/kompromat/src/testvectors -d $O/out-testvectors-11 11
 
 cat $O/out-*/*-long.txt >"$O/_bklookup_unsorted.txt"
-LC_ALL=C sort -u "$O/_bklookup_unsorted.txt" >$O/v$BKFORMAT/lookup.txt
-
 cat $O/out-*/*-short.txt >"$O/_blunsorted.txt"
-LC_ALL=C sort -u "$O/_blunsorted.txt" | xxd -r -p >$O/v$BKFORMAT/blocklist.dat
+LC_ALL=C sort -u "$O/_bklookup_unsorted.txt" >"$O/_bklookup_sorted.txt"
+LC_ALL=C sort -u "$O/_blunsorted.txt" >"$O/_blsorted.txt"
+
+# badkeys will produce errors if we have duplicates,
+# so we make sure we only have the 1st of each hash
+cut -c1-16 $O/_bklookup_sorted.txt | uniq -c |
+	grep -v " 1 " | sed -e 's:.* ::g' \
+	>$O/_duplicates.txt
+
+lfiles=$(for x in $(seq 1 11); do ls $O/out-*-$x/*-long.txt; done)
+
+for dup in $(cat $O/_duplicates.txt); do
+	grep -h $dup $lfiles | tail -n +2 >>$O/_lu_exclude.txt
+	look $dup $O/_blsorted.txt | tail -n +2 >>$O/_bl_exclude.txt
+done
+
+comm -3 "$O/_bklookup_sorted.txt" <(sort $O/_lu_exclude.txt) >$O/v$BKFORMAT/lookup.txt
+comm -3 "$O/_blsorted.txt" <(sort $O/_bl_exclude.txt) | xxd -r -p >$O/v$BKFORMAT/blocklist.dat
 
 BLOCKLISTSHA256=$(sha256sum $O/v$BKFORMAT/blocklist.dat | cut -d' ' -f1)
 LOOKUPSHA256=$(sha256sum $O/v$BKFORMAT/lookup.txt | cut -d' ' -f1)
