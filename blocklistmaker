@@ -28,9 +28,7 @@ def dummy(_a, _b):
     return 1
 
 
-# Disabling RSA checks, otherwise parsing takes forever
 mybackend = backends.default_backend()
-mybackend._rsa_skip_check_key = True
 
 # Replace slow RSA_blinding_on with dummy function
 mybackend._lib.RSA_blinding_on = dummy
@@ -76,7 +74,10 @@ for root, dirs, files in os.walk(args.source, followlinks=True):
             key = fkey.read()
             try:
                 privkey = serialization.load_pem_private_key(
-                    key, password=None, backend=mybackend
+                    key,
+                    password=None,
+                    backend=mybackend,
+                    unsafe_skip_rsa_key_validation=True,
                 )
             except TypeError:  # no password
                 flog.write(f"{root}/{fn} pem no password\n")
