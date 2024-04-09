@@ -82,6 +82,13 @@
       "type": "github",
       "repo": "SecurityFail/kompromat",
       "path": "master/src/testvectors"
+    },
+    {
+      "id": 12,
+      "name": "new",
+      "type": "new",
+      "repo": "invalid/invalid",
+      "path": "main"
     }
   ]
 }
