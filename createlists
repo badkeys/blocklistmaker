@@ -20,8 +20,10 @@ mkdir -p $O/v$BKFORMAT
 ./blocklistmaker -s keyrepos/kompromat/src/softwaretests -d $O/out-softwaretests-10 10
 ./blocklistmaker -s keyrepos/kompromat/src/testvectors -d $O/out-testvectors-11 11
 
-[ -e new ] && ./blocklistmaker -s new -d $O/out-new-12 12
-rm $O/out-new-12/*-long.txt
+if [ -e new ]; then
+	./blocklistmaker -s new -d $O/out-new-12 12
+	rm $O/out-new-12/*-long.txt
+fi
 
 cat $O/out-*/*-long.txt >"$O/_bklookup_unsorted.txt"
 cat $O/out-*/*-short.txt >"$O/_blunsorted.txt"
