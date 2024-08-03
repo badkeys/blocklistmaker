@@ -19,10 +19,11 @@ mkdir -p $O/v$BKFORMAT
 ./blocklistmaker -s keyrepos/kompromat/src/rfc -d $O/out-rfc-9 9
 ./blocklistmaker -s keyrepos/kompromat/src/softwaretests -d $O/out-softwaretests-10 10
 ./blocklistmaker -s keyrepos/kompromat/src/testvectors -d $O/out-testvectors-11 11
+./blocklistmaker -s keyrepos/morekeys/web -d $O/out-testvectors-12 12
 
 if [ -e new ]; then
-	./blocklistmaker -s new -d $O/out-new-12 12
-	rm $O/out-new-12/*-long.txt
+	./blocklistmaker -s new -d $O/out-new-99 99
+	rm $O/out-new-99/*-long.txt
 fi
 
 cat $O/out-*/*-long.txt >"$O/_bklookup_unsorted.txt"

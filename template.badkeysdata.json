@@ -85,6 +85,13 @@
     },
     {
       "id": 12,
+      "name": "web",
+      "type": "github",
+      "repo": "badkeys/morekeys",
+      "path": "main/web"
+    },
+    {
+      "id": 99,
       "name": "new",
       "type": "new",
       "repo": "invalid/invalid",
