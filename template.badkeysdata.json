@@ -91,6 +91,13 @@
       "path": "main/web"
     },
     {
+      "id": 13,
+      "name": "git",
+      "type": "github",
+      "repo": "badkeys/gitkeys",
+      "path": "main"
+    },
+    {
       "id": 99,
       "name": "new",
       "type": "new",
