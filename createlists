@@ -8,22 +8,22 @@ BKFORMAT=0
 
 mkdir -p $O/v$BKFORMAT
 
-./blocklistmaker -s keyrepos/debianopenssl -d $O/out-debianssl-1 1
-./blocklistmaker -s keyrepos/keypairvuln -d $O/out-keypair-2 2
-./blocklistmaker -s keyrepos/malware/src/ -d $O/out-ransomware-3 3
-./blocklistmaker -s keyrepos/kompromat/src/documentation -d $O/out-documentation-4 4
-./blocklistmaker -s keyrepos/kompromat/src/firmware -d $O/out-firmware-5 5
-./blocklistmaker -s keyrepos/kompromat/src/localhostcert -d $O/out-localhostcert-6 6
-./blocklistmaker -s keyrepos/kompromat/src/localroot -d $O/out-localroot-7 7
-./blocklistmaker -s keyrepos/kompromat/src/misc -d $O/out-misc-8 8
-./blocklistmaker -s keyrepos/kompromat/src/rfc -d $O/out-rfc-9 9
-./blocklistmaker -s keyrepos/kompromat/src/softwaretests -d $O/out-softwaretests-10 10
-./blocklistmaker -s keyrepos/kompromat/src/testvectors -d $O/out-testvectors-11 11
-./blocklistmaker -s keyrepos/morekeys/web -d $O/out-webkeys-12 12
-./blocklistmaker -s keyrepos/gitkeys -d $O/out-gitkeys-13 13
+./blocklistmaker -s keyrepos/debianopenssl -d $O/out-01-debianssl 1
+./blocklistmaker -s keyrepos/keypairvuln -d $O/out-02-keypair 2
+./blocklistmaker -s keyrepos/malware/src/ -d $O/out-03-ransomware 3
+./blocklistmaker -s keyrepos/kompromat/src/documentation -d $O/out-04-documentation 4
+./blocklistmaker -s keyrepos/kompromat/src/firmware -d $O/out-05-firmware 5
+./blocklistmaker -s keyrepos/kompromat/src/localhostcert -d $O/out-06-localhostcert 6
+./blocklistmaker -s keyrepos/kompromat/src/localroot -d $O/out-07-localroot 7
+./blocklistmaker -s keyrepos/kompromat/src/misc -d $O/out-08-misc 8
+./blocklistmaker -s keyrepos/kompromat/src/rfc -d $O/out-09-rfc 9
+./blocklistmaker -s keyrepos/kompromat/src/softwaretests -d $O/out-10-softwaretests 10
+./blocklistmaker -s keyrepos/kompromat/src/testvectors -d $O/out-11-testvectors 11
+./blocklistmaker -s keyrepos/morekeys/web -d $O/out-12-webkeys 12
+./blocklistmaker -s keyrepos/gitkeys -d $O/out-13-gitkeys 13
 
 if [ -e new ]; then
-	./blocklistmaker -s new -d $O/out-new-99 99
+	./blocklistmaker -s new -d $O/out-99-new 99
 	rm $O/out-new-99/*-long.txt
 fi
 
@@ -38,7 +38,7 @@ cut -c1-16 $O/_bklookup_sorted.txt | uniq -c |
 	grep -v " 1 " | sed -e 's:.* ::g' \
 	>$O/_duplicates.txt
 
-lfiles=$(for x in $(seq 1 11); do ls $O/out-*-$x/*-long.txt; done)
+lfiles=$(ls $O/out-*/*-long.txt)
 
 for dup in $(cat $O/_duplicates.txt); do
 	grep -h $dup $lfiles | tail -n +2 >>$O/_lu_exclude.txt
