@@ -87,7 +87,7 @@
       "id": 12,
       "name": "web",
       "type": "github",
-      "repo": "badkeys/morekeys",
+      "repo": "badkeys/webkeys",
       "path": "main/web"
     },
     {

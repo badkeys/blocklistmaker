@@ -14,7 +14,7 @@ You need a subdirectory keyrepos with checkouts of the following git repositorie
  https://github.com/badkeys/keypairvuln
  https://github.com/SecurityFail/kompromat
  https://github.com/SecurityFail/malware
- https://github.com/badkeys/morekeys
+ https://github.com/badkeys/webkeys
  https://github.com/badkeys/gitkeys
 ```
 
