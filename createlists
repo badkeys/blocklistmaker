@@ -19,7 +19,7 @@ mkdir -p $O/v$BKFORMAT
 ./blocklistmaker -s keyrepos/kompromat/src/rfc -d $O/out-09-rfc 9
 ./blocklistmaker -s keyrepos/kompromat/src/softwaretests -d $O/out-10-softwaretests 10
 ./blocklistmaker -s keyrepos/kompromat/src/testvectors -d $O/out-11-testvectors 11
-./blocklistmaker -s keyrepos/webkeys/web -d $O/out-12-webkeys 12
+./blocklistmaker -s keyrepos/webkeys -d $O/out-12-webkeys 12
 ./blocklistmaker -s keyrepos/gitkeys -d $O/out-13-gitkeys 13
 
 if [ -e new ]; then

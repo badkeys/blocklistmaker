@@ -88,7 +88,7 @@
       "name": "web",
       "type": "github",
       "repo": "badkeys/webkeys",
-      "path": "main/web"
+      "path": "main"
     },
     {
       "id": 13,
