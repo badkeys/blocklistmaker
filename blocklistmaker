@@ -97,10 +97,16 @@ for root, dirs, files in os.walk(args.source, followlinks=True):
                     )
                 except Exception as e:
                     try:
-                        pubkey = serialization.load_ssh_public_identity(key)
+                        priv = serialization.load_ssh_private_key(key, password=None, backend=mybackend)
+                        pubkey = priv.public_key()
                     except Exception as e:
-                        print(f"{root}/{fn} failed to load: #{e}")
-                        invalid = True
+                        try:
+                            pubkey = serialization.load_ssh_public_key(key)
+                        except Exception as e:
+                            try:
+                                pubkey = serialization.load_ssh_public_identity(key)
+                            except Exception as e:
+                                print(f"{root}/{fn} failed to load: #{e}")
 
             if isinstance(pubkey, rsa.RSAPublicKey):
                 rsa_n = pubkey.public_numbers().n
