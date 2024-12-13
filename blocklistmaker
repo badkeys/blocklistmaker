@@ -49,14 +49,8 @@ if args.force and os.path.exists(args.dest):
     shutil.rmtree(args.dest)
 
 os.mkdir(args.dest)
-fs = open(f"{args.dest}/rsa-{blid}-short.txt", "w", encoding="ascii")
-fl = open(f"{args.dest}/rsa-{blid}-long.txt", "w", encoding="ascii")
-fes = open(f"{args.dest}/ec-{blid}-short.txt", "w", encoding="ascii")
-fel = open(f"{args.dest}/ec-{blid}-long.txt", "w", encoding="ascii")
-fds = open(f"{args.dest}/dsa-{blid}-short.txt", "w", encoding="ascii")
-fdl = open(f"{args.dest}/dsa-{blid}-long.txt", "w", encoding="ascii")
-fdhs = open(f"{args.dest}/dh-{blid}-short.txt", "w", encoding="ascii")
-fdhl = open(f"{args.dest}/dh-{blid}-long.txt", "w", encoding="ascii")
+fs = open(f"{args.dest}/keys-{blid}-short.txt", "w", encoding="ascii")
+fl = open(f"{args.dest}/keys-{blid}-long.txt", "w", encoding="ascii")
 flog = open(f"{args.dest}/blocklist.log", "w", encoding="ascii")
 
 for root, dirs, files in os.walk(args.source, followlinks=True):
@@ -90,59 +84,39 @@ for root, dirs, files in os.walk(args.source, followlinks=True):
         except ValueError:
             continue
 
-        if isinstance(privkey, rsa.RSAPrivateKey):
-            rsa_n = privkey.public_key().public_numbers().n
-            s256 = hashnumber(rsa_n)
-            writehash(blid, s256, fpath, fs, fl)
+        pubkey = privkey.public_key()
 
-        elif isinstance(privkey, ec.EllipticCurvePrivateKey):
-            ec_x = privkey.public_key().public_numbers().x
-            s256 = hashnumber(ec_x)
-            writehash(blid, s256, fpath, fes, fel)
+        if isinstance(pubkey, rsa.RSAPublicKey):
+            hval = pubkey.public_numbers().n
 
-        elif isinstance(
-            privkey,
-            (
-                ed25519.Ed25519PrivateKey,
-                x25519.X25519PrivateKey,
-                x448.X448PrivateKey,
-                ed448.Ed448PrivateKey,
-            ),
-        ):
+        elif isinstance(pubkey, ec.EllipticCurvePublicKey):
+            hval = pubkey.public_numbers().x
+
+        elif isinstance(pubkey, (ed25519.Ed25519PublicKey, x25519.X25519PublicKey,
+                        x448.X448PublicKey, ed448.Ed448PublicKey)):
             # "raw" ed25519 keys are simply the x coordinate
-            ec_xb = privkey.public_key().public_bytes(
+            ec_xb = pubkey.public_bytes(
                 encoding=serialization.Encoding.Raw,
-                format=serialization.PublicFormat.Raw,
+                format=serialization.PublicFormat.Raw
             )
-            ec_x = int.from_bytes(ec_xb, byteorder="big")
-            s256 = hashnumber(ec_x)
-            writehash(blid, s256, fpath, fes, fel)
+            hval = int.from_bytes(ec_xb, byteorder="big")
 
-        elif isinstance(privkey, dsa.DSAPrivateKey):
-            pub = privkey.public_key()
-            dsa_y = pub.public_numbers().y
-            s256 = hashnumber(dsa_y)
-            writehash(blid, s256, fpath, fds, fdl)
-
-        elif isinstance(privkey, dh.DHPrivateKey):
-            pub = privkey.public_key()
+        elif isinstance(pubkey, (dsa.DSAPublicKey, dh.DHPublicKey)):
             try:
-                dh_y = pub.public_numbers().y
-                s256 = hashnumber(dh_y)
-                writehash(blid, s256, fpath, fdhs, fdhl)
+                hval = pubkey.public_numbers().y
             except ValueError:
                 # happens with implausibly small parameters
                 pass
 
         else:
-            flog.write(f"{root}/{fn} unknown type {type(privkey)}\n")
-            print(f"{root}/{fn} unknown type {type(privkey)}")
+            flog.write(f"{root}/{fn} unknown type {type(pubkey)}\n")
+            print(f"{root}/{fn} unknown type {type(pubkey)}")
+            continue
+
+        s256 = hashnumber(hval)
+        writehash(blid, s256, fpath, fs, fl)
 
 
 fs.close()
 fl.close()
 flog.close()
-fes.close()
-fel.close()
-fds.close()
-fdl.close()
