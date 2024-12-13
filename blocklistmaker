@@ -87,11 +87,8 @@ for root, dirs, files in os.walk(args.source, followlinks=True):
         except cryptography.exceptions.UnsupportedAlgorithm:  # e.g. PSS
             flog.write(f"{root}/{fn} pem unsupported algorithm\n")
             continue
-        except NotImplementedError:  # strange EC curves
-            flog.write(f"{root}/{fn} pem not implemented\n")
+        except ValueError:
             continue
-        except (ValueError, OverflowError):
-            privkey = False
 
         if isinstance(privkey, rsa.RSAPrivateKey):
             rsa_n = privkey.public_key().public_numbers().n
@@ -99,13 +96,9 @@ for root, dirs, files in os.walk(args.source, followlinks=True):
             writehash(blid, s256, fpath, fs, fl)
 
         elif isinstance(privkey, ec.EllipticCurvePrivateKey):
-            try:
-                ec_x = privkey.public_key().public_numbers().x
-                s256 = hashnumber(ec_x)
-                writehash(blid, s256, fpath, fes, fel)
-            except cryptography.exceptions.InternalError:
-                # happens with point at infinity test key
-                flog.write(f"{root}/{fn} internal error ecdsa\n")
+            ec_x = privkey.public_key().public_numbers().x
+            s256 = hashnumber(ec_x)
+            writehash(blid, s256, fpath, fes, fel)
 
         elif isinstance(
             privkey,
@@ -116,18 +109,14 @@ for root, dirs, files in os.walk(args.source, followlinks=True):
                 ed448.Ed448PrivateKey,
             ),
         ):
-            try:
-                # "raw" ed25519 keys are simply the x coordinate
-                ec_xb = privkey.public_key().public_bytes(
-                    encoding=serialization.Encoding.Raw,
-                    format=serialization.PublicFormat.Raw,
-                )
-                ec_x = int.from_bytes(ec_xb, byteorder="big")
-                s256 = hashnumber(ec_x)
-                writehash(blid, s256, fpath, fes, fel)
-            except cryptography.exceptions.InternalError:
-                # happens with point at infinity test key
-                flog.write(f"{root}/{fn} internal error ed\n")
+            # "raw" ed25519 keys are simply the x coordinate
+            ec_xb = privkey.public_key().public_bytes(
+                encoding=serialization.Encoding.Raw,
+                format=serialization.PublicFormat.Raw,
+            )
+            ec_x = int.from_bytes(ec_xb, byteorder="big")
+            s256 = hashnumber(ec_x)
+            writehash(blid, s256, fpath, fes, fel)
 
         elif isinstance(privkey, dsa.DSAPrivateKey):
             pub = privkey.public_key()
@@ -145,7 +134,7 @@ for root, dirs, files in os.walk(args.source, followlinks=True):
                 # happens with implausibly small parameters
                 pass
 
-        elif privkey is not False:
+        else:
             flog.write(f"{root}/{fn} unknown type {type(privkey)}\n")
             print(f"{root}/{fn} unknown type {type(privkey)}")
 
