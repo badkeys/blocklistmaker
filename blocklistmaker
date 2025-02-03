@@ -28,6 +28,80 @@ def dummy(_a, _b):
     return 1
 
 
+def makebl(blid, source, dest, fileext):
+    os.mkdir(dest)
+    fs = open(f"{dest}/keys-{blid}-short.txt", "w", encoding="ascii")
+    fl = open(f"{dest}/keys-{blid}-long.txt", "w", encoding="ascii")
+    flog = open(f"{dest}/blocklist.log", "w", encoding="ascii")
+
+    for root, dirs, files in os.walk(source, followlinks=True):
+        if root.endswith(".git"):
+            print("skipping .git")
+            del dirs[:]
+            continue
+        sroot = root.removeprefix(source).removeprefix("/")
+        print(f"processing {root}")
+        for fn in files:
+            if not fn.endswith(fileext):
+                continue
+            if sroot == "":
+                fpath = f"{fn}"
+            else:
+                fpath = f"{sroot}/{fn}"
+            key = pathlib.Path(f"{root}/{fn}").read_bytes()
+            try:
+                privkey = serialization.load_pem_private_key(
+                    key,
+                    password=None,
+                    backend=mybackend,
+                    unsafe_skip_rsa_key_validation=True,
+                )
+            except TypeError:  # no password
+                flog.write(f"{root}/{fn} pem no password\n")
+                continue
+            except cryptography.exceptions.UnsupportedAlgorithm:  # e.g. PSS
+                flog.write(f"{root}/{fn} pem unsupported algorithm\n")
+                continue
+            except ValueError:
+                continue
+
+            pubkey = privkey.public_key()
+
+            if isinstance(pubkey, rsa.RSAPublicKey):
+                hval = pubkey.public_numbers().n
+
+            elif isinstance(pubkey, ec.EllipticCurvePublicKey):
+                hval = pubkey.public_numbers().x
+
+            elif isinstance(pubkey, (ed25519.Ed25519PublicKey, x25519.X25519PublicKey,
+                            x448.X448PublicKey, ed448.Ed448PublicKey)):
+                # "raw" ed25519 keys are simply the x coordinate
+                ec_xb = pubkey.public_bytes(
+                    encoding=serialization.Encoding.Raw,
+                    format=serialization.PublicFormat.Raw
+                )
+                hval = int.from_bytes(ec_xb, byteorder="big")
+
+            elif isinstance(pubkey, (dsa.DSAPublicKey, dh.DHPublicKey)):
+                try:
+                    hval = pubkey.public_numbers().y
+                except ValueError:
+                    # happens with implausibly small parameters
+                    pass
+
+            else:
+                flog.write(f"{root}/{fn} unknown type {type(pubkey)}\n")
+                print(f"{root}/{fn} unknown type {type(pubkey)}")
+                continue
+
+            s256 = hashnumber(hval)
+            writehash(blid, s256, fpath, fs, fl)
+
+    fs.close()
+    fl.close()
+    flog.close()
+
+
 mybackend = backends.default_backend()
 
 # Replace slow RSA_blinding_on with dummy function
@@ -43,80 +117,7 @@ ap.add_argument("--fileext", default=".key", help="Key file extension (default .
 
 args = ap.parse_args()
 
-blid = int(args.blockid)
-
 if args.force and os.path.exists(args.dest):
     shutil.rmtree(args.dest)
 
-os.mkdir(args.dest)
-fs = open(f"{args.dest}/keys-{blid}-short.txt", "w", encoding="ascii")
-fl = open(f"{args.dest}/keys-{blid}-long.txt", "w", encoding="ascii")
-flog = open(f"{args.dest}/blocklist.log", "w", encoding="ascii")
-
-for root, dirs, files in os.walk(args.source, followlinks=True):
-    if root.endswith(".git"):
-        print("skipping .git")
-        del dirs[:]
-        continue
-    sroot = root.removeprefix(args.source).removeprefix("/")
-    print(f"processing {root}")
-    for fn in files:
-        if not fn.endswith(args.fileext):
-            continue
-        if sroot == "":
-            fpath = f"{fn}"
-        else:
-            fpath = f"{sroot}/{fn}"
-        key = pathlib.Path(f"{root}/{fn}").read_bytes()
-        try:
-            privkey = serialization.load_pem_private_key(
-                key,
-                password=None,
-                backend=mybackend,
-                unsafe_skip_rsa_key_validation=True,
-            )
-        except TypeError:  # no password
-            flog.write(f"{root}/{fn} pem no password\n")
-            continue
-        except cryptography.exceptions.UnsupportedAlgorithm:  # e.g. PSS
-            flog.write(f"{root}/{fn} pem unsupported algorithm\n")
-            continue
-        except ValueError:
-            continue
-
-        pubkey = privkey.public_key()
-
-        if isinstance(pubkey, rsa.RSAPublicKey):
-            hval = pubkey.public_numbers().n
-
-        elif isinstance(pubkey, ec.EllipticCurvePublicKey):
-            hval = pubkey.public_numbers().x
-
-        elif isinstance(pubkey, (ed25519.Ed25519PublicKey, x25519.X25519PublicKey,
-                        x448.X448PublicKey, ed448.Ed448PublicKey)):
-            # "raw" ed25519 keys are simply the x coordinate
-            ec_xb = pubkey.public_bytes(
-                encoding=serialization.Encoding.Raw,
-                format=serialization.PublicFormat.Raw
-            )
-            hval = int.from_bytes(ec_xb, byteorder="big")
-
-        elif isinstance(pubkey, (dsa.DSAPublicKey, dh.DHPublicKey)):
-            try:
-                hval = pubkey.public_numbers().y
-            except ValueError:
-                # happens with implausibly small parameters
-                pass
-
-        else:
-            flog.write(f"{root}/{fn} unknown type {type(pubkey)}\n")
-            print(f"{root}/{fn} unknown type {type(pubkey)}")
-            continue
-
-        s256 = hashnumber(hval)
-        writehash(blid, s256, fpath, fs, fl)
-
-
-fs.close()
-fl.close()
-flog.close()
+makebl(int(args.blockid), args.source, args.dest, args.fileext)
