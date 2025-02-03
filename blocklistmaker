@@ -2,6 +2,7 @@
 
 import argparse
 import hashlib
+import json
 import os
 import pathlib
 import shutil
@@ -18,22 +19,15 @@ def hashnumber(i):
     return hashlib.sha256(i_bin).hexdigest()[:30]
 
 
-def writehash(cid, khash, path, fileshort, filelong):
-    fileshort.write(f"{khash}{cid:02x}\n")
-    lhash = khash[0:16]
-    filelong.write(f"{lhash};{path}\n")
-
-
 def dummy(_a, _b):
     return 1
 
 
 def makebl(blid, source, dest, fileext):
     os.mkdir(dest)
-    fs = open(f"{dest}/keys-{blid}-short.txt", "w", encoding="ascii")
-    fl = open(f"{dest}/keys-{blid}-long.txt", "w", encoding="ascii")
     flog = open(f"{dest}/blocklist.log", "w", encoding="ascii")
 
+    keys = {}
     for root, dirs, files in os.walk(source, followlinks=True):
         if root.endswith(".git"):
             print("skipping .git")
@@ -95,11 +89,21 @@ def makebl(blid, source, dest, fileext):
                 continue
 
             s256 = hashnumber(hval)
-            writehash(blid, s256, fpath, fs, fl)
+            keys[s256] = [blid, fpath]
+
+    fs = open(f"{dest}/keys-{blid}-short.txt", "w", encoding="ascii")
+    fl = open(f"{dest}/keys-{blid}-long.txt", "w", encoding="ascii")
+
+    for k in sorted(keys):
+        fs.write(f"{k}{keys[k][0]:02x}\n")
+        fl.write(f"{k[0:16]};{keys[k][1]}\n")
 
     fs.close()
     fl.close()
     flog.close()
+
+    with open(f"{dest}/keys-{blid}.json", "w", encoding="ascii") as fj:
+        json.dump(keys, fj)
 
 
 mybackend = backends.default_backend()
