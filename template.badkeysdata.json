@@ -98,11 +98,18 @@
       "path": "main"
     },
     {
+      "id": 14,
+      "name": "forti",
+      "type": "new",
+      "repo": "invalid/forti",
+      "path": ""
+    },
+    {
       "id": 99,
       "name": "new",
       "type": "new",
-      "repo": "invalid/invalid",
-      "path": "main"
+      "repo": "invalid/new",
+      "path": ""
     }
   ]
 }
