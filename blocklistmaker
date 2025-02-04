@@ -140,6 +140,7 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
     caches = set()
     latest = 0
     nolook = []
+    repodata = {}
     for bl in template["blocklists"]:
         shortname = bl["repo"].split("/")[1]
         rpath = os.path.join(os.path.expanduser(keyrepos), shortname)
@@ -151,12 +152,21 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
             nolook.append(bl["id"])
             cacheid = getlatest(rpath)
             latest = max(latest, cacheid)
+
         elif bl["type"] == "github":
-            # for git repos, use latest commit hash as cacheid
-            gid = subprocess.check_output(["git", "-C", rpath, "rev-parse", "HEAD"])
-            cacheid = gid.decode().strip()
-            gtime = subprocess.check_output(["git", "-C", rpath, "-P", "log", "-1", "--format=%ct"])
-            latest = max(latest, int(gtime))
+            if shortname not in repodata:
+                if not os.path.exists(rpath):
+                    gurl = f"https://github.com/{bl['repo']}"
+                    subprocess.check_output(["git", "clone", "--depth", "1", gurl, rpath])
+                else:
+                    subprocess.check_output(["git", "-C", rpath, "pull"])
+                # for git repos, use latest commit hash as cacheid
+                gid = subprocess.check_output(["git", "-C", rpath, "rev-parse", "HEAD"])
+                repodata[shortname] = gid.decode().strip()
+                gtime = subprocess.check_output(["git", "-C", rpath, "-P", "log", "-1",
+                                                 "--format=%ct"])
+                latest = max(latest, int(gtime))
+            cacheid = repodata[shortname]
 
         cachedir = f"{shortname}-{bl['id']}-{cacheid}"
         if not os.path.exists(f"{cachepath}/{cachedir}"):
