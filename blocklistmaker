@@ -41,7 +41,7 @@ def getlatest(fp):
     return mt
 
 
-def makebl(blid, source, dest, fileext):
+def makebl(blid, source, dest, fileext, cache=False):
     os.mkdir(dest)
     flog = open(f"{dest}/blocklist.log", "w", encoding="ascii")
 
@@ -111,19 +111,21 @@ def makebl(blid, source, dest, fileext):
             s256 = hashnumber(hval)
             keys[s256] = [blid, fpath]
 
-    fs = open(f"{dest}/keys-{blid}-short.txt", "w", encoding="ascii")
-    fl = open(f"{dest}/keys-{blid}-long.txt", "w", encoding="ascii")
-
-    for k in sorted(keys):
-        fs.write(f"{k}{keys[k][0]:02x}\n")
-        fl.write(f"{k[0:16]};{keys[k][1]}\n")
-
-    fs.close()
-    fl.close()
     flog.close()
 
-    with open(f"{dest}/keys.json", "w", encoding="ascii") as fj:
-        json.dump(keys, fj)
+    if cache:
+        with open(f"{dest}/keys.json", "w", encoding="ascii") as fj:
+            json.dump(keys, fj)
+    else:
+        fs = open(f"{dest}/keys-{blid}-short.txt", "w", encoding="ascii")
+        fl = open(f"{dest}/keys-{blid}-long.txt", "w", encoding="ascii")
+
+        for k in sorted(keys):
+            fs.write(f"{k}{keys[k][0]:02x}\n")
+            fl.write(f"{k[0:16]};{keys[k][1]}\n")
+
+        fs.close()
+        fl.close()
 
 
 def makefromjson(jsoninput, destdir, keyrepos, fileext):
@@ -161,7 +163,7 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
                 rxpath = os.path.join(rpath, bl["path"].split("/", 1)[1])
             else:
                 rxpath = rpath
-            makebl(bl["id"], rxpath, f"{cachedir}.tmp", fileext)
+            makebl(bl["id"], rxpath, f"{cachedir}.tmp", fileext, cache=True)
             os.rename(f"{cachedir}.tmp", cachedir)
 
         caches.append(cachedir)
