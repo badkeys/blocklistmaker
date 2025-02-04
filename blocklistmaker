@@ -1,11 +1,15 @@
 #!/usr/bin/python3
 
 import argparse
+import binascii
+import datetime
 import hashlib
 import json
 import os
 import pathlib
 import shutil
+import subprocess
+import sys
 
 import cryptography
 from cryptography.hazmat import backends
@@ -23,6 +27,20 @@ def dummy(_a, _b):
     return 1
 
 
+def msg(msg):
+    if not args.quiet:
+        print(msg)
+
+
+def getlatest(fp):
+    mt = int(os.path.getmtime(fp))
+    for root, dirs, _ in os.walk(fp):
+        for dp in dirs:
+            sd = os.scandir(f"{root}/{dp}")
+            mt = int(max([mt, *[f.stat().st_mtime for f in sd]]))
+    return mt
+
+
 def makebl(blid, source, dest, fileext):
     os.mkdir(dest)
     flog = open(f"{dest}/blocklist.log", "w", encoding="ascii")
@@ -30,12 +48,14 @@ def makebl(blid, source, dest, fileext):
     keys = {}
     for root, dirs, files in os.walk(source, followlinks=True):
         if root.endswith(".git"):
-            print("skipping .git")
+            msg("skipping .git")
             del dirs[:]
             continue
         sroot = root.removeprefix(source).removeprefix("/")
-        print(f"processing {root}")
-        for fn in files:
+        msg(f"processing {root}")
+        # sorting for deterministic output
+        dirs.sort()
+        for fn in sorted(files):
             if not fn.endswith(fileext):
                 continue
             if sroot == "":
@@ -85,7 +105,7 @@ def makebl(blid, source, dest, fileext):
 
             else:
                 flog.write(f"{root}/{fn} unknown type {type(pubkey)}\n")
-                print(f"{root}/{fn} unknown type {type(pubkey)}")
+                msg(f"{root}/{fn} unknown type {type(pubkey)}")
                 continue
 
             s256 = hashnumber(hval)
@@ -102,26 +122,118 @@ def makebl(blid, source, dest, fileext):
     fl.close()
     flog.close()
 
-    with open(f"{dest}/keys-{blid}.json", "w", encoding="ascii") as fj:
+    with open(f"{dest}/keys.json", "w", encoding="ascii") as fj:
         json.dump(keys, fj)
 
 
-mybackend = backends.default_backend()
+def makefromjson(jsoninput, destdir, keyrepos, fileext):
+    with open(jsoninput, encoding="ascii") as ft:
+        template = json.load(ft)
 
-# Replace slow RSA_blinding_on with dummy function
-mybackend._lib.RSA_blinding_on = dummy
+    if not os.path.exists(os.path.expanduser("~/.cache/blocklistmaker")):
+        os.makedirs(os.path.expanduser("~/.cache/blocklistmaker"))
+
+    msg("Checking repos and creating caches...")
+    caches = []
+    latest = 0
+    nolook = []
+    for bl in template["blocklists"]:
+        shortname = bl["repo"].split("/")[1]
+        rpath = os.path.join(os.path.expanduser(keyrepos), shortname)
+        if bl["type"] == "new":
+            if not os.path.exists(rpath):
+                msg(f"Could not find {rpath}")
+                continue
+            # for plain directories, use latest mtime as cacheid
+            nolook.append(bl["id"])
+            cacheid = getlatest(rpath)
+            latest = max(latest, cacheid)
+        elif bl["type"] == "github":
+            # for git repos, use latest commit hash as cacheid
+            gid = subprocess.check_output(["git", "-C", rpath, "rev-parse", "HEAD"])
+            cacheid = gid.decode().strip()
+            gtime = subprocess.check_output(["git", "-C", rpath, "-P", "log", "-1", "--format=%ct"])
+            latest = max(latest, int(gtime))
+
+        cachedir = os.path.expanduser(f"~/.cache/blocklistmaker/{shortname}-{bl['id']}-{cacheid}")
+        if not os.path.exists(cachedir):
+            if "/" in bl["path"]:
+                rxpath = os.path.join(rpath, bl["path"].split("/", 1)[1])
+            else:
+                rxpath = rpath
+            makebl(bl["id"], rxpath, f"{cachedir}.tmp", fileext)
+            os.rename(f"{cachedir}.tmp", cachedir)
+
+        caches.append(cachedir)
+
+    latest = datetime.datetime.fromtimestamp(latest, datetime.UTC)
+    latest = latest.isoformat()
+
+    outdir = os.path.join(os.path.expanduser(destdir), latest)
+    if os.path.exists(outdir):
+        msg(f"{outdir} exists, nothing to do...")
+        sys.exit(0)
+    tmpout = f"{outdir}.tmp"
+    os.makedirs(tmpout)
+
+    msg("Merging caches...")
+    keys = {}
+    for cache in caches:
+        with open(f"{cache}/keys.json", encoding="ascii") as fj:
+            j = json.load(fj)
+        keys = j | keys
+
+    msg("Writing output...")
+    dat = ""
+    look = ""
+    for k in sorted(keys):
+        blid = keys[k][0]
+        dat += f"{k}{blid:02x}"
+        if blid not in nolook:
+            look += f"{k[0:16]};{keys[k][1]}\n"
+
+    bdat = binascii.unhexlify(dat)
+    blook = look.encode(encoding="ascii")
+    pathlib.Path(f"{tmpout}/blocklist.dat").write_bytes(bdat)
+    pathlib.Path(f"{tmpout}/lookup.txt").write_bytes(blook)
+
+    # command-line xz is faster than python's lzma module
+    subprocess.check_output(["xz", f"{tmpout}/blocklist.dat"])
+    subprocess.check_output(["xz", f"{tmpout}/lookup.txt"])
+
+    template["blocklist_sha256"] = hashlib.sha256(bdat).hexdigest()
+    template["lookup_sha256"] = hashlib.sha256(blook).hexdigest()
+    template["date"] = latest
+
+    with open(f"{tmpout}/badkeysdata.json", "w", encoding="ascii") as fj:
+        json.dump(template, fj, indent=2)
+        fj.write("\n")
+
+    os.rename(tmpout, outdir)
 
 
-ap = argparse.ArgumentParser()
-ap.add_argument("blockid", help="Blocklist ID")
-ap.add_argument("-s", "--source", nargs="?", default=".", help="Source directory")
-ap.add_argument("-d", "--dest", nargs="?", default="out", help="Destination directory")
-ap.add_argument("-f", "--force", action="store_true", help="delete outdir if it exists")
-ap.add_argument("--fileext", default=".key", help="Key file extension (default .key)")
+if __name__ == "__main__":
 
-args = ap.parse_args()
+    mybackend = backends.default_backend()
 
-if args.force and os.path.exists(args.dest):
-    shutil.rmtree(args.dest)
+    # Replace slow RSA_blinding_on with dummy function
+    mybackend._lib.RSA_blinding_on = dummy
 
-makebl(int(args.blockid), args.source, args.dest, args.fileext)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("blockid", help="Blocklist ID")
+    ap.add_argument("-s", "--source", nargs="?", default=".", help="Source directory")
+    ap.add_argument("-d", "--dest", nargs="?", default="~/blout/", help="Destination directory")
+    ap.add_argument("-f", "--force", action="store_true", help="Delete outdir if it exists")
+    ap.add_argument("--fileext", default=".key", help="Key file extension (default .key)")
+    ap.add_argument("--auto", action="store_true", help="Make full blocklist from json template")
+    ap.add_argument("--keyrepos", default="~/keyrepos/", help="Keyrepos directory")
+    ap.add_argument("-q", "--quiet", action="store_true", help="Quiet mode")
+
+    args = ap.parse_args()
+
+    if not args.auto:
+        if args.force and os.path.exists(args.dest):
+            shutil.rmtree(args.dest)
+        makebl(int(args.blockid), args.source, args.dest, args.fileext)
+    else:
+        makefromjson(args.blockid, args.dest, args.keyrepos, args.fileext)
