@@ -132,11 +132,12 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
     with open(jsoninput, encoding="ascii") as ft:
         template = json.load(ft)
 
-    if not os.path.exists(os.path.expanduser("~/.cache/blocklistmaker")):
-        os.makedirs(os.path.expanduser("~/.cache/blocklistmaker"))
+    cachepath = os.path.expanduser("~/.cache/blocklistmaker")
+    if not os.path.exists(cachepath):
+        os.makedirs(cachepath)
 
     msg("Checking repos and creating caches...")
-    caches = []
+    caches = set()
     latest = 0
     nolook = []
     for bl in template["blocklists"]:
@@ -157,19 +158,24 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
             gtime = subprocess.check_output(["git", "-C", rpath, "-P", "log", "-1", "--format=%ct"])
             latest = max(latest, int(gtime))
 
-        cachedir = os.path.expanduser(f"~/.cache/blocklistmaker/{shortname}-{bl['id']}-{cacheid}")
-        if not os.path.exists(cachedir):
+        cachedir = f"{shortname}-{bl['id']}-{cacheid}"
+        if not os.path.exists(f"{cachepath}/{cachedir}"):
             if "/" in bl["path"]:
                 rxpath = os.path.join(rpath, bl["path"].split("/", 1)[1])
             else:
                 rxpath = rpath
-            makebl(bl["id"], rxpath, f"{cachedir}.tmp", fileext, cache=True)
-            os.rename(f"{cachedir}.tmp", cachedir)
+            makebl(bl["id"], rxpath, f"{cachepath}/{cachedir}.tmp", fileext, cache=True)
+            os.rename(f"{cachepath}/{cachedir}.tmp", f"{cachepath}/{cachedir}")
 
-        caches.append(cachedir)
+        caches.add(cachedir)
 
     latest = datetime.datetime.fromtimestamp(latest, datetime.UTC)
     latest = latest.isoformat()
+
+    cachedirlist = set(os.listdir(cachepath))
+    for rm in (cachedirlist - caches):
+        msg(f"Removing {rm} (obsolete) from cache")
+        shutil.rmtree(f"{cachepath}/{rm}")
 
     outdir = os.path.join(os.path.expanduser(destdir), latest)
     if os.path.exists(outdir):
@@ -181,7 +187,7 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
     msg("Merging caches...")
     keys = {}
     for cache in caches:
-        with open(f"{cache}/keys.json", encoding="ascii") as fj:
+        with open(f"{cachepath}/{cache}/keys.json", encoding="ascii") as fj:
             j = json.load(fj)
         keys = j | keys
 
