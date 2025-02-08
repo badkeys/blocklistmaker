@@ -157,9 +157,9 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
             if shortname not in repodata:
                 if not os.path.exists(rpath):
                     gurl = f"https://github.com/{bl['repo']}"
-                    subprocess.check_output(["git", "clone", "--depth", "1", gurl, rpath])
+                    subprocess.check_output(["git", "clone", "-q", "--depth", "1", gurl, rpath])
                 else:
-                    subprocess.check_output(["git", "-C", rpath, "pull"])
+                    subprocess.check_output(["git", "-C", rpath, "pull", "-q"])
                 # for git repos, use latest commit hash as cacheid
                 gid = subprocess.check_output(["git", "-C", rpath, "rev-parse", "HEAD"])
                 repodata[shortname] = gid.decode().strip()
