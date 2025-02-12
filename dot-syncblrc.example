@@ -1,0 +1,10 @@
+# example .syncblrc for syncbl script
+
+# local webroot, supports ~ to user home expansion
+webroot="/var/www/updates.badkeys.info"
+
+# remote ssh user and host running blocklistmaker
+remotessh="blocklistmaker@example.com"
+
+# remote blocklist dir, can be relative to ssh user home
+remotepath="blout"
