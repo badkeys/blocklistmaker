@@ -179,15 +179,14 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
 
         caches.add(cachedir)
 
-    latest = datetime.datetime.fromtimestamp(latest, datetime.UTC)
-    latest = latest.isoformat()
+    latestiso = datetime.datetime.fromtimestamp(latest, datetime.UTC).isoformat()
 
     cachedirlist = set(os.listdir(cachepath))
     for rm in (cachedirlist - caches):
         msg(f"Removing {rm} (obsolete) from cache")
         shutil.rmtree(f"{cachepath}/{rm}")
 
-    outdir = os.path.join(os.path.expanduser(destdir), latest)
+    outdir = os.path.join(os.path.expanduser(destdir), str(latest))
     if os.path.exists(outdir):
         msg(f"{outdir} exists, nothing to do...")
         sys.exit(0)
@@ -221,13 +220,18 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
 
     template["blocklist_sha256"] = hashlib.sha256(bdat).hexdigest()
     template["lookup_sha256"] = hashlib.sha256(blook).hexdigest()
-    template["date"] = latest
+    template["date"] = latestiso
+    template["blocklist_url"] = template["blocklist_url"].replace("__TIMESTAMP__", str(latest))
+    template["lookup_url"] = template["lookup_url"].replace("__TIMESTAMP__", str(latest))
 
     with open(f"{tmpout}/badkeysdata.json", "w", encoding="ascii") as fj:
         json.dump(template, fj, indent=2)
         fj.write("\n")
 
     os.rename(tmpout, outdir)
+
+    lfile = os.path.join(os.path.expanduser(destdir), "latest")
+    pathlib.Path(lfile).write_text(str(latest))
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
 {
   "bkformat": 0,
   "date": "_DATE_",
-  "blocklist_url": "https://update.badkeys.info/v0/blocklist.dat.xz",
+  "blocklist_url": "https://update.badkeys.info/v0/__TIMESTAMP__/blocklist.dat.xz",
   "blocklist_sha256": "_BLOCKLISTSHA256_",
-  "lookup_url": "https://update.badkeys.info/v0/lookup.txt.xz",
+  "lookup_url": "https://update.badkeys.info/v0/__TIMESTAMP__/lookup.txt.xz",
   "lookup_sha256": "_LOOKUPSHA256_",
   "blocklists": [
     {
