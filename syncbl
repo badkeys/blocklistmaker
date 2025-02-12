@@ -1,0 +1,31 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: MIT
+#
+# Syncs latest badkeys blocklist from a remote host to the
+# web server running https://updates.badkeys.info/
+
+import subprocess
+import tomllib
+import os
+import sys
+
+VER = "v0"
+
+with open(os.path.expanduser("~/.syncblrc"), "rb") as f:
+    conf = tomllib.load(f)
+
+latest = subprocess.check_output(["ssh", conf["remotessh"], "cat", "~/blout/latest"],
+                                 env={"LC_ALL": "C"})
+latest = str(int(latest))
+
+tdir = os.path.join(os.path.expanduser(conf["webroot"]), VER)
+target = os.path.join(tdir, latest)
+if os.path.exists(target):
+    # Nothing to do
+    sys.exit(0)
+
+subprocess.check_output(["scp", "-r", f"{conf['remotessh']}:{conf['remotepath']}/{latest}", tdir])
+
+template = os.path.join(tdir, "badkeysdata.json")
+# Python supports no atomic symlink overwrite...
+subprocess.check_output(["ln", "-sf", f"{target}/badkeysdata.json", template])
