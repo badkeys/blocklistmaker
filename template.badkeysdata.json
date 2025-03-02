@@ -64,24 +64,24 @@
     },
     {
       "id": 9,
-      "name": "rfc",
-      "type": "github",
-      "repo": "SecurityFail/kompromat",
-      "path": "master/src/rfc"
-    },
-    {
-      "id": 10,
       "name": "softwaretests",
       "type": "github",
       "repo": "SecurityFail/kompromat",
       "path": "master/src/softwaretests"
     },
     {
-      "id": 11,
+      "id": 10,
       "name": "testvectors",
       "type": "github",
       "repo": "SecurityFail/kompromat",
       "path": "master/src/testvectors"
+    },
+    {
+      "id": 11,
+      "name": "rfc",
+      "type": "github",
+      "repo": "SecurityFail/kompromat",
+      "path": "master/src/rfc"
     },
     {
       "id": 12,
