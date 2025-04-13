@@ -201,13 +201,16 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
         keys = j | keys
 
     msg("Writing output...")
-    dat = ""
-    look = ""
+    dat = []
+    look = []
     for k in sorted(keys):
         blid = keys[k][0]
-        dat += f"{k}{blid:02x}"
+        dat.append(f"{k}{blid:02x}")
         if blid not in nolook:
-            look += f"{k[0:16]};{keys[k][1]}\n"
+            look.append(f"{k[0:16]};{keys[k][1]}\n")
+
+    dat = "".join(dat)
+    look = "".join(look)
 
     bdat = binascii.unhexlify(dat)
     blook = look.encode(encoding="ascii")
