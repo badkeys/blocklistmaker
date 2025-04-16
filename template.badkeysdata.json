@@ -100,9 +100,9 @@
     {
       "id": 14,
       "name": "forti",
-      "type": "new",
-      "repo": "invalid/forti",
-      "path": ""
+      "type": "github",
+      "repo": "badkeys/fortikeys",
+      "path": "main/keys"
     },
     {
       "id": 99,
