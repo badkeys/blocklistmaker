@@ -1,0 +1,24 @@
+#!/usr/bin/python3
+
+import time
+import os
+import shutil
+import argparse
+
+ap = argparse.ArgumentParser()
+ap.add_argument("dir")
+args = ap.parse_args()
+
+subdirs = []
+for d in next(os.walk(args.dir))[1]:
+    subdirs.append(int(d))
+
+subdirs.sort()
+
+# Always keep the last two
+subdirs = subdirs[0:-2]
+
+twoweeksago = int(time.time()) - (60 * 60 * 24 * 14)
+for subdir in subdirs:
+    if subdir <= twoweeksago:
+        shutil.rmtree(os.path.join(args.dir, str(subdir)))
