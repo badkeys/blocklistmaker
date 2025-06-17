@@ -16,6 +16,8 @@ You need a subdirectory keyrepos with checkouts of the following git repositorie
  https://github.com/SecurityFail/malware
  https://github.com/badkeys/webkeys
  https://github.com/badkeys/gitkeys
+ https://github.com/badkeys/fortikeys
+ https://github.com/badkeys/pkgkeys
 ```
 
 *blocklistmaker* is a python script to create truncated hashes in suitable

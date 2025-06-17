@@ -105,6 +105,13 @@
       "path": "main/keys"
     },
     {
+      "id": 15,
+      "name": "pkgkeys",
+      "type": "github",
+      "repo": "badkeys/pkgkeys",
+      "path": "main"
+    },
+    {
       "id": 99,
       "name": "new",
       "type": "new",
