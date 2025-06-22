@@ -106,9 +106,16 @@
     },
     {
       "id": 15,
-      "name": "pkgkeys",
+      "name": "pkg",
       "type": "github",
       "repo": "badkeys/pkgkeys",
+      "path": "main"
+    },
+    {
+      "id": 16,
+      "name": "firmwares",
+      "type": "github",
+      "repo": "badkeys/fwkeys",
       "path": "main"
     },
     {
