@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 
-import time
+import argparse
 import os
 import shutil
-import argparse
+import time
 
 ap = argparse.ArgumentParser()
 ap.add_argument("dir")

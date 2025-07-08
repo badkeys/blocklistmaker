@@ -4,10 +4,10 @@
 # Syncs latest badkeys blocklist from a remote host to the
 # web server running https://updates.badkeys.info/
 
-import subprocess
-import tomllib
 import os
+import subprocess
 import sys
+import tomllib
 
 VER = "v0"
 
