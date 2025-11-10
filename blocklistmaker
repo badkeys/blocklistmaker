@@ -46,8 +46,8 @@ def makebl(blid, source, dest, fileext, cache=False):
 
     keys = {}
     for root, dirs, files in os.walk(source, followlinks=True):
-        if root.endswith(".git"):
-            msg("skipping .git")
+        if root.endswith("/.git"):
+            msg(f"skipping .git ({root})")
             del dirs[:]
             continue
         sroot = root.removeprefix(source).removeprefix("/")
