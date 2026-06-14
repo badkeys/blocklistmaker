@@ -88,12 +88,8 @@ def makebl(blid, source, dest, fileext, cache=False):
 
             elif isinstance(pubkey, (ed25519.Ed25519PublicKey, x25519.X25519PublicKey,
                             x448.X448PublicKey, ed448.Ed448PublicKey)):
-                # "raw" ed25519 keys are simply the x coordinate
-                ec_xb = pubkey.public_bytes(
-                    encoding=serialization.Encoding.Raw,
-                    format=serialization.PublicFormat.Raw
-                )
-                hval = int.from_bytes(ec_xb, byteorder="big")
+                rawpub = pubkey.public_bytes_raw()
+                hval = int.from_bytes(rawpub, byteorder="big")
 
             elif isinstance(pubkey, (dsa.DSAPublicKey, dh.DHPublicKey)):
                 try:
