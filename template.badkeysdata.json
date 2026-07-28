@@ -119,6 +119,13 @@
       "path": "main"
     },
     {
+      "id": 17,
+      "name": "osimage",
+      "type": "github",
+      "repo": "badkeys/osimagekeys",
+      "path": "main"
+    },
+    {
       "id": 99,
       "name": "new",
       "type": "new",
