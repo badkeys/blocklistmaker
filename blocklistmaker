@@ -10,6 +10,7 @@ import pathlib
 import shutil
 import subprocess
 import sys
+import warnings
 
 import cryptography
 from cryptography.hazmat import backends
@@ -259,6 +260,9 @@ if __name__ == "__main__":
     ap.add_argument("-q", "--quiet", action="store_true", help="Quiet mode")
 
     args = ap.parse_args()
+
+    # Don't show deprecation warnings for DH keys
+    warnings.filterwarnings("ignore", category=cryptography.utils.CryptographyDeprecationWarning)
 
     if not args.auto:
         if args.force and os.path.exists(args.dest):
