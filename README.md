@@ -20,6 +20,7 @@ blocklist:
  https://github.com/badkeys/fortikeys
  https://github.com/badkeys/pkgkeys
  https://github.com/badkeys/fwkeys
+ https://github.com/badkeys/osimagekeys
 ```
 
 *blocklistmaker* is a python script to create truncated hashes in suitable formats for
