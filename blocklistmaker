@@ -1,4 +1,7 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
+#
+# SPDX-License-Identifier: MIT
+# Part of badkeys: https://badkeys.info/
 
 import argparse
 import binascii
