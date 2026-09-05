@@ -145,7 +145,7 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
         os.makedirs(cachepath)
 
     msg("Checking repos and creating caches...")
-    caches = set()
+    caches = []
     latest = 0
     nolook = []
     repodata = {}
@@ -195,12 +195,12 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
             makebl(bl["id"], rxpath, f"{cachepath}/{cachedir}.tmp", fileext, cache=True)
             os.rename(f"{cachepath}/{cachedir}.tmp", f"{cachepath}/{cachedir}")
 
-        caches.add(cachedir)
+        caches.append(cachedir)
 
     latestiso = datetime.datetime.fromtimestamp(latest, datetime.UTC).isoformat()
 
     cachedirlist = set(os.listdir(cachepath))
-    for rm in (cachedirlist - caches):
+    for rm in (cachedirlist - set(caches)):
         msg(f"Removing {rm} (obsolete) from cache")
         shutil.rmtree(f"{cachepath}/{rm}")
 
