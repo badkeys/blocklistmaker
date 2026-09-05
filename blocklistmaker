@@ -163,17 +163,27 @@ def makefromjson(jsoninput, destdir, keyrepos, fileext):
 
         elif bl["type"] == "github":
             if shortname not in repodata:
+                gid = None
                 if not os.path.exists(rpath):
                     gurl = f"https://github.com/{bl['repo']}"
-                    subprocess.check_output(["git", "clone", "-q", "--depth", "1", gurl, rpath])
+                    # get last remote commit id, skip if cache already exists
+                    rcommit = subprocess.check_output(["git", "ls-remote", gurl])
+                    rcommit = rcommit.split(b"\t", 1)[0].decode()
+                    if os.path.exists(f"{cachepath}/{shortname}-{bl['id']}-{rcommit}"):
+                        # cache already exists, we can set gid and thereby skip
+                        gid = rcommit
+                    else:
+                        subprocess.check_output(["git", "clone", "-q", "--depth", "1", gurl, rpath])
                 else:
                     subprocess.check_output(["git", "-C", rpath, "pull", "-q"])
                 # for git repos, use latest commit hash as cacheid
-                gid = subprocess.check_output(["git", "-C", rpath, "rev-parse", "HEAD"])
-                repodata[shortname] = gid.decode().strip()
-                gtime = subprocess.check_output(["git", "-C", rpath, "-P", "log", "-1",
-                                                 "--format=%ct"])
-                latest = max(latest, int(gtime))
+                if not gid:
+                    gid = subprocess.check_output(["git", "-C", rpath, "rev-parse", "HEAD"])
+                    gid = gid.decode().strip()
+                    gtime = subprocess.check_output(["git", "-C", rpath, "-P", "log", "-1",
+                                                     "--format=%ct"])
+                    latest = max(latest, int(gtime))
+                repodata[shortname] = gid
             cacheid = repodata[shortname]
 
         cachedir = f"{shortname}-{bl['id']}-{cacheid}"
